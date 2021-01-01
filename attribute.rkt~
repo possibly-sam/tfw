@@ -1,7 +1,6 @@
 #lang racket
 
 (require "dice.rkt")
-(require "attribute.rkt")
 (provide character%)
 
 ; state --> options
@@ -12,9 +11,32 @@
 ;  prone:  stand
 
 
-; TODO:  move to utilities section
+
 (define nonnegative/c (and/c number? (or/c positive? zero?)))
 
+(define/contract attribute%
+  (class/c            [get-current-value (->m nonnegative/c )])
+
+ (class object%
+                    (init name_ value_)
+   (super-new)
+                     (define my-name name_)
+                     (define my-base-value value_)
+                     (define my-current-value value_)
+                     (define/public (get-name) my-name)
+                     (define/public (get-base-value) my-base-value)
+                     (define/public (get-current-value) my-current-value)
+
+                     (define/public (affect n)
+                       (let (
+                             [newval (max (my-current-value . + . n) 0)] ; don't go below zero
+                             )
+                       (set! my-current-value newval)
+                       ))
+                       
+                     (define/public (reset) (set! my-current-value my-base-value)
+                     
+                     )))
 
 (define/contract character%
   (class/c
@@ -60,24 +82,6 @@
                                 '(3 .  0) ; 15
                                 ))
                                 
-    (define weapon-vector (vector
-                                "none" ; 0
-                                "Desperation" ; 1
-                                "Rock" ; 2
-                                "Pointed Stick" ; 3
-                                "Bare Fists" ; 4
-                                "Bare Fists" ; 5
-                                "Dagger" ; 6
-                                "Sax Dagger" ; 7
-                                "Rapier"; 8
-                                "Axe" ; 9
-                                "Cutlass" ; 10
-                                "Shortsword" ; 11
-                                "Broadsword" ; 12
-                                "Morningstar" ; 13
-                                "2-H-S" ; 14
-                                "BattleAxe" ; 15
-                                ))
                                 
     (define (get-damage-dice)
       (if (send this is-dead)(new dicenadds% [n__ 0] [adds_ 0]) ; you can't do any damage if you are already dead.  
@@ -102,17 +106,16 @@
     
     
     (define/public (show-me)
-      ( let* ( [st_ (send st get-base-value) ]
+      ( let ( [st_ (send st get-base-value) ]
               [stc (send st get-current-value)]
               [dx_ (send dx get-base-value) ]
               [dxc (send dx get-current-value)]
               [da (if subjecttodxadjustment "*" "")]
               [expv (send this get-exp-value) ]
-              [ weap_ (vector-ref weapon-vector st_) ]
               )
          (if (eq? 0 stc) (format "~a is dead:  exp = ~a.\n\n" my-name expv)
              (string-append
-              (format "~a (~a):\n" my-name weap_)
+              (format "~a:\n" my-name)
               (format "==\t==\n")
               (format "st\tdx\n")
               (format "~a (~a)\t~a (~a) ~a\n\n" st_ stc dx_ dxc da)

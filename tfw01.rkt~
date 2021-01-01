@@ -18,7 +18,7 @@
 (define-syntax-rule (damt! it) (send it get-damage #t))
 ;(show! b0)
 
-(define a0 (new character% [name_ "a0"] [st_ 14] [dx_ 14])) ; exp 417
+(define a0 (new character% [name_ "a0"] [st_ 13] [dx_ 11])) ; exp 34
 
 ;(show! a0)
 
@@ -62,8 +62,3 @@
                      )
                    (melee-roundt! a0 b0)
                    ))
-
-
-
-(turn!)
-(melee-roundt! a0 b0)

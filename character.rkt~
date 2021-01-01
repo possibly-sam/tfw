@@ -1,7 +1,6 @@
 #lang racket
 
 (require "dice.rkt")
-(require "attribute.rkt")
 (provide character%)
 
 ; state --> options
@@ -11,35 +10,31 @@
 ;  disengaged < 5  away:  missile, close while dodging, close without dodging, retreat, retreat while dodging, engage, go prone;
 ;  prone:  stand
 
+(define attribute% (class object%
+                     (init name_ value_)
+                     (define my-name name_)
+                     (define my-base-value value_)
+                     (define my-current-value value_)
+                     (define/public (get-name) my-name)
+                     (define/public (get-base-value) my-base-value)
+                     (define/public (get-current-value) my-current-value)
 
-; TODO:  move to utilities section
-(define nonnegative/c (and/c number? (or/c positive? zero?)))
+                     (define/public (affect n) (set! my-current-value (my-current-value . + . n)))
+                     (define/public (reset) (set! my-current-value my-base-value)
+                     
+                     )))
 
 
-(define/contract character%
-  (class/c
-   [get-st (->m nonnegative/c )]
-   [get-dx (->m nonnegative/c )]
-   [get-exp-value (->m nonnegative/c )]
-                      )
-
+(define character%
   (class object%
     (init name_ st_ dx_)
     (define my-name name_)
-    (define st (new attribute% [name_ "st"] [value_ st_]))
-    (define/public (get-st) (send st get-current-value))
-    (define dx (new attribute% [name_ "dx"] [value_ dx_]))
+    (define st st_)
+    (define/public (get-st) st)
+    (define dx dx_)
     (define subjecttodxadjustment #f)
-    (define/public (get-dx) (send dx get-current-value))
+    (define/public (get-dx) dx)
     (define my-to-hit-dice (new dice% [n_ 3]))
-    (define/public (get-exp-value)
-      ( (send st get-base-value) . + . (send dx get-base-value) ) )
-    (define/public (is-dead)
-      (let (
-            [ s0 (send this get-st) ]
-            [ d0 (send this get-dx) ]
-            )
-      (eq? 0 ( s0 . * . d0 ))))
 
     (define damage-dice-vector (vector
                                 '(0 . 0) ; 0
@@ -60,34 +55,14 @@
                                 '(3 .  0) ; 15
                                 ))
                                 
-    (define weapon-vector (vector
-                                "none" ; 0
-                                "Desperation" ; 1
-                                "Rock" ; 2
-                                "Pointed Stick" ; 3
-                                "Bare Fists" ; 4
-                                "Bare Fists" ; 5
-                                "Dagger" ; 6
-                                "Sax Dagger" ; 7
-                                "Rapier"; 8
-                                "Axe" ; 9
-                                "Cutlass" ; 10
-                                "Shortsword" ; 11
-                                "Broadsword" ; 12
-                                "Morningstar" ; 13
-                                "2-H-S" ; 14
-                                "BattleAxe" ; 15
-                                ))
                                 
     (define (get-damage-dice)
-      (if (send this is-dead)(new dicenadds% [n__ 0] [adds_ 0]) ; you can't do any damage if you are already dead.  
       (let* (
-             [ st1 (send st get-base-value) ]
-             [ st0 (min (max 0 st1) 15)]
+             [ st0 (min (max 0 st) 15)]
              [ q0 (vector-ref damage-dice-vector st0) ]
              )
         (new dicenadds% [n__ (car q0)] [adds_ (cdr q0)])
-        )))
+        ))
              
     
     (super-new)
@@ -96,38 +71,19 @@
       ; if n > 4, -2 dx next turn
       (when (4 . < . n) (set! subjecttodxadjustment #t))
       ; if n > 7   skip next turn
-      (send st affect (0 . - . n))
-      ; (set! st (- st n))
+      (set! st (- st n))
       )
     
     
     (define/public (show-me)
-      ( let* ( [st_ (send st get-base-value) ]
-              [stc (send st get-current-value)]
-              [dx_ (send dx get-base-value) ]
-              [dxc (send dx get-current-value)]
-              [da (if subjecttodxadjustment "*" "")]
-              [expv (send this get-exp-value) ]
-              [ weap_ (vector-ref weapon-vector st_) ]
-              )
-         (if (eq? 0 stc) (format "~a is dead:  exp = ~a.\n\n" my-name expv)
-             (string-append
-              (format "~a (~a):\n" my-name weap_)
-              (format "==\t==\n")
-              (format "st\tdx\n")
-              (format "~a (~a)\t~a (~a) ~a\n\n" st_ stc dx_ dxc da)
-              ) ; end string append
-             ) ; end if
-         ) ; end let
-      ;(format "~a:\n==\t==\nst\tdx\n~a (~a)\t~a~a\n\n" my-name (send this get-st) (send this get-dx) (if subjecttodxadjustment "*" ""))
+      (format "~a:\n==\t==\nst\tdx\n~a\t~a~a\n\n" my-name st dx (if subjecttodxadjustment "*" ""))
       ) ; end show-me
     
     ; hit
     (define/public (hits? [trace-me #f])
       (let* (
-             [dx0 (send dx get-current-value)] 
-            [the-roll (send my-to-hit-dice roll-sum trace-me) ] ; need a natural < 6 to be auto hit
-            [ adjdx (if subjecttodxadjustment (dx0 . - . 2 ) dx0) ]
+            [the-roll (send my-to-hit-dice roll-sum trace-me) ]
+            [ adjdx (if subjecttodxadjustment (dx . - . 2 ) dx) ]
             [ result         (cond
                                [ (the-roll . < . 6) #t ]
                                [ (15 . < . the-roll) #f ]
@@ -142,8 +98,6 @@
             (println (format "~a ~a" the_name the_outcome))
 ;          (if result (println (format "~a    hit!!" my-name)) (println (format "~a missed.." my-name)))
           )) ; end when trace-me
-        ; if the-roll is 4 then double
-        ; if the-roll is 3 then critical hit (S.R. vs. death)
         (set!  subjecttodxadjustment #f) ; dx adjustment never lasts more than one turn.
         result
 ))

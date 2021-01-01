@@ -1,0 +1,1 @@
+("7.9" racket ("9080032d1c9e10072c756fa762b7aacfd71c0e6a" . "155aac72a1b562241bc1f58cbfda227ae1a19914") #"/home/qlambron/Documents/STT/git-source/tfw/tfw/attribute.rkt" #"/home/qlambron/Documents/STT/git-source/tfw/tfw/dice.rkt" (collects #"errortrace" #"errortrace-key.rkt") (collects #"racket" #"main.rkt") (collects #"racket" #"runtime-config.rkt"))

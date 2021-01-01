@@ -1,0 +1,1 @@
+("7.9" racket ("7f71eac94b6bacb0b90558e78469adafa352d2e1" . "e918414c2101f6af7c97f97060a9964b33b28fb7") (collects #"errortrace" #"errortrace-key.rkt") (collects #"math" #"base.rkt") (collects #"math" #"private" #"base" #"base-functions.rkt") (collects #"racket" #"main.rkt") (collects #"racket" #"runtime-config.rkt") (collects #"wxme" #"read.rkt"))
